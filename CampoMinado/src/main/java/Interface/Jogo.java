@@ -5,8 +5,12 @@
 package Interface;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.util.Random;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
 /**
@@ -37,11 +41,16 @@ boolean [][] bombas  = new boolean [10][10];
  int quantidadeBombas = 15;
  
  boolean jogoEncerrado= false;
-            
+ 
+ int quantidadeDeCasasAbertas=0;
+ 
             
 // construtor da classe/tela - sem ele a tela nao e nada
     public Jogo() {
         initComponents();
+        //definir o tamanho do painel
+        
+        painelCampo.setPreferredSize(new Dimension (900,700));
         criarTabuleiro();
       }
       //CRIAR AS NOSSAS FUNÇÕES/METADOS
@@ -62,6 +71,13 @@ boolean [][] bombas  = new boolean [10][10];
     //remover marcas do botao q vem por padrao
     botao.setFocusPainted(false);
     botao.setEnabled(false);
+    final int linhaSelecionada= linha;
+    final int colunaSelecionada= coluna;
+
+   //adicionnaf o evento de clique para abrir as casas
+    botao.addActionListener((ActionEvent Evento)->{
+            abrirBotao(linhaSelecionada,colunaSelecionada);
+    });     
      //adicionar botão dentro da matriz
      btnCampos[linha][coluna]=botao;
      //adicionar dentro do painel
@@ -74,6 +90,67 @@ boolean [][] bombas  = new boolean [10][10];
     
     }//FIM DO METADO CriarTabuleiro
     
+    public void AdicionarBombas(){
+    // criar variavel random para gerar valores aleatorips
+    Random sorteador= new Random();
+    int bombasAdicionadas= 0;
+    
+    while(bombasAdicionadas <quantidadeBombas){
+     //SORTEAR O NUMERO DA LINHA E COLUNA QUE VAI FICAR A BOMBA   
+    int linhas= sorteador.nextInt(10);
+    int coluna= sorteador.nextInt(10);
+    //VERIFICAR SE NÃO EXISTE BOMBA ADICIONADA NO LOCAL
+    if(!bombas[linhas][coluna]){
+    //adicionar bomba na matriz
+    bombas[linhas][coluna]=true;
+    bombasAdicionadas++;
+    }
+    
+     }
+    }
+       
+    public void IniciarJogo(){
+    //chamar o metado adicionar bombas
+    AdicionarBombas();
+    
+    //iniciar os botões do jogo
+    for (int colunas=0;colunas<=9;colunas++){
+    for (int linhas=0;linhas<=9;linhas++){
+    JButton botao= btnCampos[linhas][colunas];
+    //deixar botão visivel e clicaveis
+    botao.setEnabled(true);
+    }
+       }
+    btnIniciar.setText("REINICIAR");
+    }
+    
+    public void abrirBotao(int linha, int coluna){
+    // verificar se o jogo foi finalizado
+    if(jogoEncerrado)return;
+    //verificar se o botao ja foi aberto
+    if(abertos[linha][coluna])return;
+    
+    /* seo jogo ainda estiver rodando e o botão ainda não 
+    estiver sido aberto - então vamos abrir o botão*/
+    abertos[linha][coluna]=true;
+    quantidadeDeCasasAbertas++;
+    //acessar o que tem dentro do botão
+    JButton botao= btnCampos[linha][coluna];
+    //se no botao tiver uma bomba, então vamos mostrar a bomba a ele
+    if(bombas[linha][coluna]){
+        ImageIcon imgBomba= new ImageIcon(getClass().getResource("/Interface/bomb.png"));
+        //colocar imagem no botao
+        botao.setIcon(imgBomba);
+        return;
+    }else{
+        ImageIcon imgBandeira= new ImageIcon(getClass().getResource("/Interface/finish.png"));
+        botao.setIcon(imgBandeira);
+        return;
+    }
+    
+     }
+    
+            
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -99,6 +176,7 @@ boolean [][] bombas  = new boolean [10][10];
         btnIniciar.setBackground(new java.awt.Color(204, 0, 0));
         btnIniciar.setFont(new java.awt.Font("Snap ITC", 1, 24)); // NOI18N
         btnIniciar.setText("Iniciar");
+        btnIniciar.addActionListener(this::btnIniciarActionPerformed);
 
         tfTempo.setEditable(false);
         tfTempo.setBackground(new java.awt.Color(255, 102, 102));
@@ -157,6 +235,12 @@ boolean [][] bombas  = new boolean [10][10];
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void btnIniciarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIniciarActionPerformed
+        // TODO add your handling code here:
+      IniciarJogo();
+      
+    }//GEN-LAST:event_btnIniciarActionPerformed
 
     /**
      * @param args the command line arguments
