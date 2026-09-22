@@ -12,6 +12,8 @@ import java.awt.event.ActionEvent;
 import java.util.Random;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
+import javax.swing.Timer;
 
 /**
  *
@@ -43,6 +45,8 @@ boolean [][] bombas  = new boolean [10][10];
  boolean jogoEncerrado= false;
  
  int quantidadeDeCasasAbertas=0;
+    int segundosPassados = 0;
+    Timer cronometro;
  
             
 // construtor da classe/tela - sem ele a tela nao e nada
@@ -110,46 +114,156 @@ boolean [][] bombas  = new boolean [10][10];
     }
        
     public void IniciarJogo(){
-    //chamar o metado adicionar bombas
-    AdicionarBombas();
+        LimparJogo();
+        //chamar o metodo adicionarBombas
+        AdicionarBombas();
+        IniciarCronometro();
+        //depois precisamos iniciar os botoes do jogo
+        for(int colunas=0;colunas<=9;colunas++){
+            for(int linhas=0;linhas<=9;linhas++){
+                JButton botao = btnCampos[linhas][colunas];
+                //deixar os botoes visiveis e clicaveis
+                botao.setEnabled(true);
+            }//fim do 2° for
+        }//fim do 1° for
+        btnIniciar.setText("REINICIAR");
+    }//fim do iniciar jogo
     
-    //iniciar os botões do jogo
-    for (int colunas=0;colunas<=9;colunas++){
-    for (int linhas=0;linhas<=9;linhas++){
-    JButton botao= btnCampos[linhas][colunas];
-    //deixar botão visivel e clicaveis
-    botao.setEnabled(true);
-    }
-       }
-    btnIniciar.setText("REINICIAR");
-    }
     
     public void abrirBotao(int linha, int coluna){
-    // verificar se o jogo foi finalizado
-    if(jogoEncerrado)return;
-    //verificar se o botao ja foi aberto
-    if(abertos[linha][coluna])return;
+        // verificar se o jogo foi finalizado
+        if(jogoEncerrado) return;
+        
+        //verificar se o botao ja foi aberto
+        if(abertos[linha][coluna]) return;
+      
+        /*se o jogo ainda estiver rodando e o botão ainda não tiver
+        sido aberto - então vamos abrir o botão*/
+        abertos[linha][coluna]=true;
+        quantidadeDeCasasAbertas++;
+          
+        // acessar o que tem dentro do botão
+        JButton botao = btnCampos[linha][coluna];
+        //se no botão tiver uma bomba, então vamos mostrar a bomba a ele
+        if(bombas[linha][coluna]){
+            //variavel que recebe nossa imagem
+           ImageIcon imgBomba = new ImageIcon( 
+                   getClass().getResource("/assets/bomb.png"));
+           //colocar a imagem no botao
+           botao.setIcon(imgBomba);
+           FinalizarJogo(false);
+           return;
+        }else{
+            ImageIcon imgBandeira = new ImageIcon(
+                getClass().getResource("/assets/finish.png"));
+            botao.setIcon(imgBandeira);
+            return;
+        }
+        
+    }// fim do metodo abrirBotao
     
-    /* seo jogo ainda estiver rodando e o botão ainda não 
-    estiver sido aberto - então vamos abrir o botão*/
-    abertos[linha][coluna]=true;
-    quantidadeDeCasasAbertas++;
-    //acessar o que tem dentro do botão
-    JButton botao= btnCampos[linha][coluna];
-    //se no botao tiver uma bomba, então vamos mostrar a bomba a ele
-    if(bombas[linha][coluna]){
-        ImageIcon imgBomba= new ImageIcon(getClass().getResource("/Interface/bomb.png"));
-        //colocar imagem no botao
-        botao.setIcon(imgBomba);
-        return;
-    }else{
-        ImageIcon imgBandeira= new ImageIcon(getClass().getResource("/Interface/finish.png"));
-        botao.setIcon(imgBandeira);
-        return;
+    
+    // este metodo informa quando a pessoa perder ou ganhar o jogo
+    public void FinalizarJogo(boolean venceu){
+       mostrarBombas();
+        //vamos informar que o jogo acabou
+        jogoEncerrado=true;
+        cronometro.stop();
+        
+        //verificar se a pessa venceu ou não
+        if(venceu){
+            JOptionPane.showMessageDialog(
+                    this,"Parabéns você venceu!");
+            LimparJogo();
+        }else{
+            JOptionPane.showMessageDialog(
+                    this,"Ops, você perdeu o jogo!");
+            LimparJogo();
+        }
+       }//fim do FinalizarJogo
+    
+    
+    public void VerificarVitoria(){
+        // armazenar a quantidade de casas com bandeiras
+        int casasSemBomba= 100 - quantidadeBombas;
+        //se a pessoa abriu todas as bandeiras e não abriu nenhuma bomba
+        // então ela venceu o jogo, e o finalizarJogo imprime a mensagem
+        if(quantidadeDeCasasAbertas == casasSemBomba){
+            FinalizarJogo(true);
+        }
+  
+        
     }
     
-     }
     
+    public void IniciarCronometro(){
+        // zerar o cronometro caso tenha tido um jogo anterior
+        if(cronometro !=null){
+            cronometro.stop();
+        }
+        // reseta o cronometro
+        segundosPassados = 0;
+        tfTempo.setText("00:00");
+        
+        // converter o tempo em minutos e segundos
+        // o cronometro conta de 1 em 1 segundo, e vai convertendo
+        cronometro = new Timer(1000, Evento->{
+            segundosPassados++;
+            int minutos = segundosPassados/60;
+            int horas = minutos/60;
+            int segundo = segundosPassados%60;
+            //mostrar o tempo dentro da váriavel
+            tfTempo.setText(
+            String.format("%02d:%02d:%02d",horas,minutos,segundo));
+                       
+        });
+        cronometro.start();
+        
+        
+    }
+    
+    
+    public void LimparJogo(){
+         quantidadeDeCasasAbertas=0;
+         jogoEncerrado=false;
+        
+         
+        for(int coluna=0;coluna<=9;coluna++){
+            for(int linha=0;linha<=9;linha++){
+                bombas[linha][coluna]=false;
+                abertos[linha][coluna]=false;
+               
+                
+                //limpeza dos botões
+                JButton botao = btnCampos[linha][coluna];
+                botao.setIcon(null);
+                
+            }//fim do 2° for
+        }//fim do 1° for
+         AdicionarBombas(); 
+         IniciarCronometro();
+        
+    }//fim do LimparJogo
+    
+    
+    public void mostrarBombas(){
+       for(int coluna=0;coluna<=9;coluna++){
+           for(int linha=0;linha<=9;linha++){
+                JButton botao = btnCampos[linha][coluna];
+                //se no botão tiver uma bomba, então vamos mostrar a bomba a ele
+                if(bombas[linha][coluna]){
+                    //variavel que recebe nossa imagem
+                   ImageIcon imgBomba = new ImageIcon( 
+                           getClass().getResource("/assets/bomb.png"));
+                   //colocar a imagem no botao
+                   botao.setIcon(imgBomba);
+                   
+                }//fim do if
+           }//fim do 2° for
+       }// fim do 1° for      
+    }// fim do mostrarBombas
+    
+
             
     
     /**
@@ -168,6 +282,7 @@ boolean [][] bombas  = new boolean [10][10];
         painelCampo = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setResizable(false);
 
         titulo.setBackground(new java.awt.Color(153, 0, 51));
         titulo.setFont(new java.awt.Font("Snap ITC", 1, 48)); // NOI18N
@@ -193,7 +308,7 @@ boolean [][] bombas  = new boolean [10][10];
         );
         painelCampoLayout.setVerticalGroup(
             painelCampoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 429, Short.MAX_VALUE)
+            .addGap(0, 628, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -202,18 +317,17 @@ boolean [][] bombas  = new boolean [10][10];
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(55, 55, 55)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(tfTempo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(titulo, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 65, Short.MAX_VALUE)
-                        .addComponent(btnIniciar, javax.swing.GroupLayout.PREFERRED_SIZE, 149, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(54, 54, 54))
+                .addComponent(titulo, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 221, Short.MAX_VALUE)
+                .addComponent(btnIniciar, javax.swing.GroupLayout.PREFERRED_SIZE, 149, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 9, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(painelCampo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(tfTempo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -228,12 +342,13 @@ boolean [][] bombas  = new boolean [10][10];
                         .addComponent(titulo, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tfTempo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(12, 12, 12)
                 .addComponent(painelCampo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         pack();
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnIniciarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnIniciarActionPerformed
